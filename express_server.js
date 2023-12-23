@@ -5,6 +5,19 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
+function generateRandomString() {
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+  const charLength = chars.length;
+  let result = '';
+
+  let i=0
+  while (i < 6) {
+  result += chars.charAt(Math.floor(Math.random() * charLength));
+  i++;
+  }
+  return result
+}
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
