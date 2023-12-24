@@ -5,6 +5,8 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
+
+// generates a 6 char length string
 function generateRandomString() {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
   const charLength = chars.length;
@@ -31,6 +33,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+// individual url display pages based on the short url assigned
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
@@ -49,18 +52,13 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+// on POST redirects to urls/:id
 app.post("/urls", (req, res) => {
+  console.log(req.body); // Log the POST request body to the console
   let shortID = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortID] = longURL;
   res.redirect(`/urls/${shortID}`)
-  console.log(req.body); // Log the POST request body to the console
-});
-
-app.get("/urls/:id", (req, res) => {
-  const shortID = req.params.id;
-  const longURL = urlDatabase[shortID];
-  res.redirect(longURL);
 });
 
 
