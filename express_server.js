@@ -8,16 +8,16 @@ app.use(express.urlencoded({ extended: true }));
 
 // generates a 6 char length string
 function generateRandomString() {
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
   const charLength = chars.length;
   let result = '';
 
-  let i=0
+  let i = 0;
   while (i < 6) {
-  result += chars.charAt(Math.floor(Math.random() * charLength));
-  i++;
+    result += chars.charAt(Math.floor(Math.random() * charLength));
+    i++;
   }
-  return result
+  return result;
 }
 
 const cookieParser = require('cookie-parser');
@@ -40,8 +40,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { 
-    id: req.params.id, 
+  const templateVars = {
+    id: req.params.id,
     longURL: urlDatabase[req.params.id],
     username: req.cookies["username"]
   };
@@ -73,12 +73,12 @@ app.post("/urls", (req, res) => {
   let shortID = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortID] = longURL;
-  res.redirect(`/urls/${shortID}`)
+  res.redirect(`/urls/${shortID}`);
 });
 
 app.post('/urls/:id/delete', (req, res) => {
   const urlId = req.params.id;
-  delete urlDatabase[urlId];  
+  delete urlDatabase[urlId];
 
   // After deletion, redirect to the URLs page:
   res.redirect('/urls');
@@ -91,8 +91,8 @@ app.post('/urls/:id/edit', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  res.cookie("username", req.body.username)
-  res.redirect('/urls')
+  res.cookie("username", req.body.username);
+  res.redirect('/urls');
 });
 
 app.post('/logout', (req, res) => {
