@@ -50,9 +50,19 @@ app.get("/hello", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
+  let shortID = generateRandomString();
+  const longURL = req.body.longURL;
+  urlDatabase[shortID] = longURL;
+  res.redirect(`/urls/${shortID}`)
   console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
+
+app.get("/urls/:id", (req, res) => {
+  const shortID = req.params.id;
+  const longURL = urlDatabase[shortID];
+  res.redirect(longURL);
+});
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
