@@ -52,6 +52,14 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+app.post('/urls/:id', (req, res) => {
+  const updatedURL = req.body.longURL;
+  const urlId = req.params.id;
+  urlDatabase[urlId] = updatedURL;
+  res.redirect(`/urls/${urlId}`);
+
+});
+
 // on POST redirects to urls/:id
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
@@ -63,16 +71,16 @@ app.post("/urls", (req, res) => {
 
 app.post('/urls/:id/delete', (req, res) => {
   const urlId = req.params.id;
-  // You'll need logic here to:
-  // 1. Verify the user is logged in
-  // 2. Verify the logged-in user owns the URL with urlId
-  // ... put your logic here ...
-
-  // If checks pass, delete the URL:
-  delete urlDatabase[urlId];  // Assuming urlDatabase is where you store URLs
+  delete urlDatabase[urlId];  
 
   // After deletion, redirect to the URLs page:
   res.redirect('/urls');
+});
+
+app.post('/urls/:id/edit', (req, res) => {
+  const urlId = req.params.id;
+  
+  res.redirect(`/urls/${urlId}`);
 });
 
 
