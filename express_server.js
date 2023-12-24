@@ -52,6 +52,8 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+
+// updates the longURL value to the specified new value
 app.post('/urls/:id', (req, res) => {
   const updatedURL = req.body.longURL;
   const urlId = req.params.id;
@@ -83,6 +85,11 @@ app.post('/urls/:id/edit', (req, res) => {
   res.redirect(`/urls/${urlId}`);
 });
 
+app.post('/login', (req, res) => {
+  let user = req.body
+  res.cookie("username", user )
+  res.redirect('/urls')
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
