@@ -61,6 +61,20 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortID}`)
 });
 
+app.post('/urls/:id/delete', (req, res) => {
+  const urlId = req.params.id;
+  // You'll need logic here to:
+  // 1. Verify the user is logged in
+  // 2. Verify the logged-in user owns the URL with urlId
+  // ... put your logic here ...
+
+  // If checks pass, delete the URL:
+  delete urlDatabase[urlId];  // Assuming urlDatabase is where you store URLs
+
+  // After deletion, redirect to the URLs page:
+  res.redirect('/urls');
+});
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
