@@ -7,7 +7,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 // generates a 6 char length string
-function generateRandomString() {
+const generateRandomString = function() {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
   const charLength = chars.length;
   let result = '';
@@ -18,7 +18,23 @@ function generateRandomString() {
     i++;
   }
   return result;
-}
+};
+
+// function to search for existing users/email. If exists, return user object, else return null
+const userLookup = function(newEmail) {
+  for (let user in users) {
+    console.log("this is user");
+    console.log(user);
+    console.log("this is users[user].email");
+    console.log(users[user].email);
+    console.log("this is newEmail");
+    console.log(newEmail);
+    if (newEmail === users[user].email) {
+      return user;
+    }
+  }
+  return null;
+};
 
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
@@ -51,9 +67,9 @@ app.get("/register", (req, res) => {
     user_id: req.cookies["user_id"],
     urls: urlDatabase
   };
-  res.render("register", templateVars)
+  res.render("register", templateVars);
 
-})
+});
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
@@ -122,15 +138,27 @@ app.post('/login', (req, res) => {
   res.redirect('/urls');
 });
 
+
+// registration Post
 app.post('/register', (req, res) => {
   console.log(req.body); // Log the POST request body to the console
+  
   let userN = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+
+  //error handling for registration
+  if (email === "" || password === "") {
+    res.status(400).send('Email/Password cannot be blank');
+  }
+  if (userLookup(email)) {
+    res.status(400).send('Email already in use');
+  }
+
   users[userN] = {id: userN, email: email, password: password};
   res.cookie("user_id", userN);
   res.redirect(`/urls`);
-})
+});
 
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
