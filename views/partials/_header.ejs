@@ -19,10 +19,15 @@
       </div>
     </div>
     <% if (!user_id) { %>
+      <form class="form-inline" action="/registerred" method="POST">
+        <div class="form-group mb-2">
+          <button type="submit" style="margin-right: 20px" class="btn btn-outline-dark" >Register</button>
+          
+        </div>
+      </form>
       <form class="form-inline" action="/login" method="POST">
         <div class="form-group mb-2">
-          <input class="form-control" type="text" name="username" placeholder="Username" style="margin-right: 10px" />
-          <button type="submit" class="btn btn-outline-dark">Login</button>
+          <button type="submit" class="btn btn-outline-dark" >Login</button>
         </div>
       </form>
     <% } else { %>

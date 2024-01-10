@@ -68,6 +68,15 @@ app.get("/register", (req, res) => {
     urls: urlDatabase
   };
   res.render("register", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  const templateVars = {
+    users: users,
+    user_id: req.cookies["user_id"],
+    urls: urlDatabase
+  };
+  res.render("login", templateVars);
 
 });
 
@@ -135,8 +144,14 @@ app.post('/urls/:id/edit', (req, res) => {
 
 app.post('/login', (req, res) => {
   res.cookie("username", req.body.username);
-  res.redirect('/urls');
+  res.redirect('/login');
 });
+
+app.post('/registerred', (req, res) => {
+  res.cookie("username", req.body.username);
+  res.redirect('/register');
+});
+
 
 
 // registration Post
