@@ -23,12 +23,6 @@ const generateRandomString = function() {
 // function to search for existing users/email. If exists, return user object, else return null
 const userLookup = function(newEmail) {
   for (let user in users) {
-    console.log("this is user");
-    console.log(user);
-    console.log("this is users[user].email");
-    console.log(users[user].email);
-    console.log("this is newEmail");
-    console.log(newEmail);
     if (newEmail === users[user].email) {
       return user;
     }
@@ -56,6 +50,9 @@ const users = {
     password: "dishwasher-funk",
   },
 };
+
+
+// --- GETS ---
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -109,6 +106,18 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+app.get("/urls", (req, res) => {
+  const templateVars = {
+    users: users,
+    user_id: req.cookies["user_id"],
+    urls: urlDatabase
+  };
+  console.log(templateVars);
+  res.render("urls_index", templateVars);
+});
+
+
+// --- POSTS ---
 
 // updates the longURL value to the specified new value
 app.post('/urls/:id', (req, res) => {
@@ -142,19 +151,14 @@ app.post('/urls/:id/edit', (req, res) => {
   res.redirect(`/urls/${urlId}`);
 });
 
-app.post('/login', (req, res) => {
-  res.cookie("username", req.body.username);
+app.post('/loginButton', (req, res) => {
   res.redirect('/login');
 });
 
-app.post('/registerred', (req, res) => {
-  res.cookie("username", req.body.username);
+app.post('/registerButton', (req, res) => {
   res.redirect('/register');
 });
 
-
-
-// registration Post
 app.post('/register', (req, res) => {
   console.log(req.body); // Log the POST request body to the console
   
@@ -177,17 +181,25 @@ app.post('/register', (req, res) => {
 
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
-app.get("/urls", (req, res) => {
-  const templateVars = {
-    users: users,
-    user_id: req.cookies["user_id"],
-    urls: urlDatabase
+app.post('/login', (req, res) => {
+  const email = req.body.email;
+  user = userLookup(email);
+
+  //check if valid email and if valid password for email
+  if (userLookup(email)) {
+    if (users[user].password === req.body.password) {
+      res.cookie("user_id", user);
+      res.redirect('/urls');
+      
+    } else {
+    res.status(403).send('Wrong Password.');
+    }
+  } else {
+  res.status(403).send('Email cannot be found.');
   };
-  console.log(templateVars);
-  res.render("urls_index", templateVars);
 });
 
 app.listen(PORT, () => {
