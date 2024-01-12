@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const bcrypt = require('bcryptjs');
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -30,6 +31,8 @@ const userLookup = function(newEmail) {
   return null;
 };
 
+
+// function to return currents users urls from the urlDatabase
 const urlsForUser = function(id) {
   const urls = {};
   for (const shortURL in urlDatabase) {
@@ -280,6 +283,7 @@ app.post('/register', (req, res) => {
   let userN = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
 
   //error handling for registration
   if (email === "" || password === "") {
@@ -289,7 +293,7 @@ app.post('/register', (req, res) => {
     res.status(400).send('Email already in use');
   }
 
-  users[userN] = {id: userN, email: email, password: password};
+  users[userN] = {id: userN, email: email, password: hashedPassword};
   res.cookie("user_id", userN);
   res.redirect(`/urls`);
 });
@@ -305,7 +309,7 @@ app.post('/login', (req, res) => {
 
   //check if valid email and if valid password for email
   if (userLookup(email)) {
-    if (users[user].password === req.body.password) {
+    if (bcrypt.compareSync(req.body.password, users[user].password)) {
       res.cookie("user_id", user);
       res.redirect('/urls');
       
