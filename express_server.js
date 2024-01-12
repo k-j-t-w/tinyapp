@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
+const helpers = require ('./helpers.js')
 
 app.use(cookieSession({
   name: 'session',
@@ -10,55 +11,6 @@ app.use(cookieSession({
 }));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
-
-
-// generates a 6 char length string
-const generateRandomString = function() {
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-  const charLength = chars.length;
-  let result = '';
-
-  let i = 0;
-  while (i < 6) {
-    result += chars.charAt(Math.floor(Math.random() * charLength));
-    i++;
-  }
-  return result;
-};
-
-// function to search for existing users/email. If exists, return user object, else return null
-const userLookup = function(newEmail) {
-  for (let user in users) {
-    if (newEmail === users[user].email) {
-      return user;
-    }
-  }
-  return null;
-};
-
-
-// function to return currents users urls from the urlDatabase
-const urlsForUser = function(id) {
-  const urls = {};
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      urls[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return urls;
-};
-
-// function to return a boolean for ownership
-const doesUserOwn = function(userId, user) {
-  const usersURLs = urlsForUser(userId);
-  let ownership = false;
-  for (const short in usersURLs) {
-    if (short === user) {
-      ownership = true;
-    }
-  }
-  return ownership;
-};
 
 const urlDatabase = {
   "b2xVn2": {
@@ -146,7 +98,7 @@ app.get("/urls/:id", (req, res) => {
     res.send("ERROR: URL id does not exist");
   }
 
-  if (!doesUserOwn(req.session.user_id, req.params.id)) {
+  if (!helpers.doesUserOwn(req.session.user_id, req.params.id, urlDatabase)) {
     res.send('You do not have access to this page.');
   } else {
 
@@ -176,7 +128,7 @@ app.get("/urls", (req, res) => {
     res.redirect('/please_login');
   } else {
 
-    let urls = urlsForUser(req.session.user_id);
+    let urls = helpers.urlsForUser(req.session.user_id, urlDatabase);
     const templateVars = {
       users: users,
       user_id: req.session.user_id,
@@ -232,7 +184,7 @@ app.post("/urls", (req, res) => {
     res.send("Must be logged in to shorten URLs.");
   } else {
     console.log(req.body); // Log the POST request body to the console
-    let shortID = generateRandomString();
+    let shortID = helpers.generateRandomString();
     const longURL = req.body.longURL;
     urlDatabase[shortID] = {
       longURL: longURL,
@@ -243,7 +195,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.post('/urls/:id/delete', (req, res) => {
-  if (!doesUserOwn(req.session.user_id, req.params.id)) {
+  if (!helpers.doesUserOwn(req.session.user_id, req.params.id, urlDatabase)) {
     res.send('You do not have access to this command.');
   } else {
     const urlId = req.params.id;
@@ -255,7 +207,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.post('/urls/:id/edit', (req, res) => {
-  if (!doesUserOwn(req.session.user_id, req.params.id)) {
+  if (!helpers.doesUserOwn(req.session.user_id, req.params.id, urlDatabase)) {
     res.send('You do not have access to this command.');
   } else {
     const urlId = req.params.id;
@@ -274,7 +226,7 @@ app.post('/registerButton', (req, res) => {
 
 app.post('/register', (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  let userN = generateRandomString();
+  let userN = helpers.generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(req.body.password, 10);
@@ -283,13 +235,14 @@ app.post('/register', (req, res) => {
   if (email === "" || password === "") {
     res.status(400).send('Email/Password cannot be blank');
   }
-  if (userLookup(email)) {
+  if (helpers.getUserByEmail(email, users)) {
     res.status(400).send('Email already in use');
-  }
+  } else {
 
   users[userN] = {id: userN, email: email, password: hashedPassword};
   req.session.user_id = userN;
   res.redirect(`/urls`);
+  };
 });
 
 app.post('/logout', (req, res) => {
@@ -299,10 +252,10 @@ app.post('/logout', (req, res) => {
 
 app.post('/login', (req, res) => {
   const email = req.body.email;
-  const user = userLookup(email);
+  const user = helpers.getUserByEmail(email, users);
 
   //check if valid email and if valid password for email
-  if (userLookup(email)) {
+  if (helpers.getUserByEmail(email, users)) {
     if (bcrypt.compareSync(req.body.password, users[user].password)) {
       req.session.user_id = user;
       res.redirect('/urls');
