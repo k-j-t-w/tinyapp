@@ -55,10 +55,14 @@ const users = {
 // --- GETS ---
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect(`/urls`);
 });
 
 app.get("/register", (req, res) => {
+  // if logged in redirect to /urls
+  if ( req.cookies["user_id"]) {
+    res.redirect('/urls')
+  };
   const templateVars = {
     users: users,
     user_id: req.cookies["user_id"],
@@ -68,6 +72,12 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
+
+  // if logged in redirect to /urls
+  if ( req.cookies["user_id"]) {
+    res.redirect('/urls')
+  };
+
   const templateVars = {
     users: users,
     user_id: req.cookies["user_id"],
@@ -78,6 +88,10 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+// if not logged in redirect to login page
+  if ( !req.cookies["user_id"]) {
+    res.redirect('/login')
+  };
   const templateVars = {
     users: users,
     user_id: req.cookies["user_id"],
@@ -87,6 +101,10 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+
+  if (!urlDatabase[req.params.id]){
+    res.send("ERROR: URL id does not exist")
+  } else {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
@@ -95,6 +113,7 @@ app.get("/urls/:id", (req, res) => {
     urls: urlDatabase
   };
   res.render("urls_show", templateVars);
+ };
 });
 
 
@@ -116,6 +135,14 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+app.get("/u/:id", (req, res) => {
+  if (!urlDatabase[req.params.id]){
+    res.send("ERROR: URL id does not exist")
+  } else {
+  const id = req.params.id;
+  res.redirect(urlDatabase[id]);
+  };
+})
 
 // --- POSTS ---
 
@@ -130,11 +157,17 @@ app.post('/urls/:id', (req, res) => {
 
 // on POST redirects to urls/:id
 app.post("/urls", (req, res) => {
+
+  if (!req.cookies["user_id"]) {
+    res.send("Must be logged in to shorten URLs.")
+  } else {
+
   console.log(req.body); // Log the POST request body to the console
   let shortID = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortID] = longURL;
   res.redirect(`/urls/${shortID}`);
+  }
 });
 
 app.post('/urls/:id/delete', (req, res) => {
