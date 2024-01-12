@@ -2,9 +2,12 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require('bcryptjs');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2'],
+}));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
@@ -90,12 +93,12 @@ app.get("/", (req, res) => {
 
 app.get("/register", (req, res) => {
   // if logged in redirect to /urls
-  if (req.cookies["user_id"]) {
+  if (req.session.user_id) {
     res.redirect('/urls');
   }
   const templateVars = {
     users: users,
-    user_id: req.cookies["user_id"],
+    user_id: req.session.user_id,
     urls: urlDatabase
   };
   res.render("register", templateVars);
@@ -104,13 +107,13 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
 
   // if logged in redirect to /urls
-  if (req.cookies["user_id"]) {
+  if (req.session.user_id) {
     res.redirect('/urls');
   }
 
   const templateVars = {
     users: users,
-    user_id: req.cookies["user_id"],
+    user_id: req.session.user_id,
     urls: urlDatabase
   };
   res.render("login", templateVars);
@@ -119,12 +122,12 @@ app.get("/login", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
 // if not logged in redirect to login page
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.redirect('/login');
   } else {
     const templateVars = {
       users: users,
-      user_id: req.cookies["user_id"],
+      user_id: req.session.user_id,
       urls: urlDatabase
     };
     res.render("urls_new", templateVars);
@@ -133,7 +136,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   //check if loggeed in
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.redirect('/please_login');
   }
 
@@ -143,7 +146,7 @@ app.get("/urls/:id", (req, res) => {
     res.send("ERROR: URL id does not exist");
   }
 
-  if (!doesUserOwn(req.cookies["user_id"], req.params.id)) {
+  if (!doesUserOwn(req.session.user_id, req.params.id)) {
     res.send('You do not have access to this page.');
   } else {
 
@@ -151,7 +154,7 @@ app.get("/urls/:id", (req, res) => {
       id: req.params.id,
       longURL: urlDatabase[req.params.id].longURL,
       users: users,
-      user_id: req.cookies["user_id"],
+      user_id: req.session.user_id,
       urls: urlDatabase
     };
     res.render("urls_show", templateVars);
@@ -169,14 +172,14 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   // check if logged in
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.redirect('/please_login');
   } else {
 
-    let urls = urlsForUser(req.cookies["user_id"]);
+    let urls = urlsForUser(req.session.user_id);
     const templateVars = {
       users: users,
-      user_id: req.cookies["user_id"],
+      user_id: req.session.user_id,
       urls: urls
     };
     console.log(templateVars);
@@ -197,13 +200,13 @@ app.get("/u/:id", (req, res) => {
 app.get("/please_login", (req, res) => {
 
   // if logged in redirect to /urls
-  if (req.cookies["user_id"]) {
+  if (req.session.user_id) {
     res.redirect('/urls');
   }
 
   const templateVars = {
     users: users,
-    user_id: req.cookies["user_id"],
+    user_id: req.session.user_id,
     urls: urlDatabase
   };
   res.render("please_login", templateVars);
@@ -225,7 +228,7 @@ app.post('/urls/:id', (req, res) => {
 // POST for new URL creation
 app.post("/urls", (req, res) => {
 
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.send("Must be logged in to shorten URLs.");
   } else {
     console.log(req.body); // Log the POST request body to the console
@@ -233,14 +236,14 @@ app.post("/urls", (req, res) => {
     const longURL = req.body.longURL;
     urlDatabase[shortID] = {
       longURL: longURL,
-      userID: req.cookies["user_id"],
+      userID: req.session.user_id,
     };
     res.redirect(`/urls/${shortID}`);
   }
 });
 
 app.post('/urls/:id/delete', (req, res) => {
-  if (!doesUserOwn(req.cookies["user_id"], req.params.id)) {
+  if (!doesUserOwn(req.session.user_id, req.params.id)) {
     res.send('You do not have access to this command.');
   } else {
     const urlId = req.params.id;
@@ -252,7 +255,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.post('/urls/:id/edit', (req, res) => {
-  if (!doesUserOwn(req.cookies["user_id"], req.params.id)) {
+  if (!doesUserOwn(req.session.user_id, req.params.id)) {
     res.send('You do not have access to this command.');
   } else {
     const urlId = req.params.id;
@@ -285,12 +288,12 @@ app.post('/register', (req, res) => {
   }
 
   users[userN] = {id: userN, email: email, password: hashedPassword};
-  res.cookie("user_id", userN);
+  req.session.user_id = userN;
   res.redirect(`/urls`);
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/login');
 });
 
@@ -301,7 +304,7 @@ app.post('/login', (req, res) => {
   //check if valid email and if valid password for email
   if (userLookup(email)) {
     if (bcrypt.compareSync(req.body.password, users[user].password)) {
-      res.cookie("user_id", user);
+      req.session.user_id = user;
       res.redirect('/urls');
       
     } else {
