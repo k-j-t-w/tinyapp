@@ -21,6 +21,12 @@
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
+        <p class="card-text">
+          You have visited this page <%= pageViews %> times(s).
+        </p>
+        <p class="card-text">
+          Unique visitors: <%= uniqueVisitors %>
+        </p>
       </div>
       <div class="card-footer text-muted">
         <div class="">
@@ -46,12 +52,35 @@
                   </div>
                 </div>
               </div>
-              
 
             </p>
           </div>
         </div>
       </div>
+      
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Timestamp</th>
+            <th scope="col">Visitor ID</th>
+        
+          </tr>
+        </thead>
+
+
+      <tbody>
+        <% for (let visit in visitDisplay) { %>
+          <tr>
+            <td><%= visitDisplay[visit].date %></td>
+            <td><%= visitDisplay[visit].visitor_id %></td>
+            
+          </tr>
+        <% } %>
+      </tbody>
+
+      </table>
+
     </div>
     
     <!-- Bootstrap JS -->

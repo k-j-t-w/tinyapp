@@ -1,4 +1,5 @@
 const express = require("express");
+const session = require('express-session');
 const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require('bcryptjs');
@@ -10,6 +11,7 @@ app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2'],
 }));
+app.use(session({secret: "Shh, its a secret!"}));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'))
@@ -38,6 +40,20 @@ const users = {
   },
 };
 
+const viewsDatabase = {
+  randomUrl: "viewcount",
+};
+
+const uniqueUserDatabase = {
+  randomUrl: {
+    users: ["array", "of", "Users"]
+  }
+};
+
+const visitDisplay = {url: {
+  date: "Date",
+  visitor_id: "Visitor",
+}};
 
 // --- GETS ---
 
@@ -94,22 +110,56 @@ app.get("/urls/:id", (req, res) => {
     res.redirect('/please_login');
   }
 
-
   // check if short url is valid
   if (!urlDatabase[req.params.id]) {
     res.send("ERROR: URL id does not exist");
   }
 
+  // check if user owns url
   if (!helpers.doesUserOwn(req.session.user_id, req.params.id, urlDatabase)) {
     res.send('You do not have access to this page.');
   } else {
+
+
+    // page view counter
+    viewsDatabase[req.params.id] = (viewsDatabase[req.params.id] || 0) + 1;
+
+   //uniqueUsers counter
+   if (!uniqueUserDatabase[req.params.id]) {
+    uniqueUserDatabase[req.params.id] = {users: [req.session.user_id]}
+   } else {
+    if (uniqueUserDatabase[req.params.id].users.includes(req.session.user_id)) {
+      uniqueUserDatabase[req.params.id] = uniqueUserDatabase[req.params.id]
+    } else {
+      uniqueUserDatabase[req.params.id].users.push(req.session.user_id)
+    };
+   };
+
+   // visits display
+  let timestamp = Date.now()
+  if (visitDisplay[req.params.id]) {
+   visitDisplay[req.params.id].push({
+    date: new Date(timestamp),
+    visitor_id: req.session.user_id,
+  });
+  } else {
+    visitDisplay[req.params.id] = [{
+      date: new Date(timestamp),
+      visitor_id: req.session.user_id,
+    }];
+  };
+  
+  console.log(visitDisplay);
 
     const templateVars = {
       id: req.params.id,
       longURL: urlDatabase[req.params.id].longURL,
       users: users,
       user_id: req.session.user_id,
-      urls: urlDatabase
+      urls: urlDatabase,
+      pageViews: viewsDatabase[req.params.id],
+      uniqueVisitors: uniqueUserDatabase[req.params.id].users.length,
+      visitDisplay: visitDisplay[req.params.id]
     };
     res.render("urls_show", templateVars);
   }
