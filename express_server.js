@@ -4,6 +4,7 @@ const PORT = 8080; // default port 8080
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
 const helpers = require ('./helpers.js')
+const methodOverride = require('method-override')
 
 app.use(cookieSession({
   name: 'session',
@@ -11,6 +12,7 @@ app.use(cookieSession({
 }));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride('_method'))
 
 const urlDatabase = {
   "b2xVn2": {
@@ -168,7 +170,7 @@ app.get("/please_login", (req, res) => {
 // --- POSTS ---
 
 // updates the longURL value to the specified new value
-app.post('/urls/:id', (req, res) => {
+app.put('/urls/:id', (req, res) => {
 
   const updatedURL = req.body.longURL;
   const urlId = req.params.id;
@@ -194,7 +196,8 @@ app.post("/urls", (req, res) => {
   }
 });
 
-app.post('/urls/:id/delete', (req, res) => {
+app.delete('/urls/:id', (req, res) => {
+  console.log("delete route")
   if (!helpers.doesUserOwn(req.session.user_id, req.params.id, urlDatabase)) {
     res.send('You do not have access to this command.');
   } else {
