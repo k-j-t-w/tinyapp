@@ -47,4 +47,4 @@ const doesUserOwn = function(userId, user, database) {
   return ownership;
 };
 
-module.exports = { generateRandomString, getUserByEmail, urlsForUser, doesUserOwn }
+module.exports = { generateRandomString, getUserByEmail, urlsForUser, doesUserOwn };

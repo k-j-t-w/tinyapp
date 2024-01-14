@@ -4,8 +4,8 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
-const helpers = require('./helpers.js')
-const methodOverride = require('method-override')
+const helpers = require('./helpers.js');
+const methodOverride = require('method-override');
 
 app.use(cookieSession({
   name: 'session',
@@ -14,7 +14,7 @@ app.use(cookieSession({
 // app.use(session({ secret: "Shh, its a secret!" }));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
-app.use(methodOverride('_method'))
+app.use(methodOverride('_method'));
 
 const urlDatabase = {
   "b2xVn2": {
@@ -128,17 +128,17 @@ app.get("/urls/:id", (req, res) => {
 
   //uniqueUsers counter
   if (!uniqueUserDatabase[req.params.id]) {
-    uniqueUserDatabase[req.params.id] = { users: [req.session.user_id] }
+    uniqueUserDatabase[req.params.id] = { users: [req.session.user_id] };
   } else {
     if (uniqueUserDatabase[req.params.id].users.includes(req.session.user_id)) {
-      uniqueUserDatabase[req.params.id] = uniqueUserDatabase[req.params.id]
+      null;
     } else {
-      uniqueUserDatabase[req.params.id].users.push(req.session.user_id)
-    };
-  };
+      uniqueUserDatabase[req.params.id].users.push(req.session.user_id);
+    }
+  }
 
   // visits display
-  let timestamp = Date.now()
+  let timestamp = Date.now();
   if (visitDisplay[req.params.id]) {
     visitDisplay[req.params.id].push({
       date: new Date(timestamp),
@@ -149,7 +149,7 @@ app.get("/urls/:id", (req, res) => {
       date: new Date(timestamp),
       visitor_id: req.session.user_id,
     }];
-  };
+  }
 
 
   const templateVars = {
@@ -163,7 +163,7 @@ app.get("/urls/:id", (req, res) => {
     visitDisplay: visitDisplay[req.params.id]
   };
 
-  console.log("show route")
+  console.log("show route");
   res.render("urls_show", templateVars);
 
 });
@@ -171,10 +171,9 @@ app.get("/urls/:id", (req, res) => {
 app.get("/urls", (req, res) => {
   // check if logged in
   if (!req.session.user_id) {
-    console.log("hello")
     return res.redirect('/please_login');
   }
-  console.log("In get URLS")
+  console.log("In get URLS");
   const urls = helpers.urlsForUser(req.session.user_id, urlDatabase);
   const templateVars = {
     users: users,
@@ -240,7 +239,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.delete('/urls/:id', (req, res) => {
-  console.log("delete route")
+  console.log("delete route");
   if (!helpers.doesUserOwn(req.session.user_id, req.params.id, urlDatabase)) {
     res.send('You do not have access to this command.');
   } else {
