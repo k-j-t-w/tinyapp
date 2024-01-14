@@ -1,5 +1,4 @@
 const express = require("express");
-// const session = require('express-session');
 const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require('bcryptjs');
@@ -11,7 +10,6 @@ app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2'],
 }));
-// app.use(session({ secret: "Shh, its a secret!" }));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
@@ -245,14 +243,12 @@ app.delete('/urls/:id', (req, res) => {
   } else {
     const urlId = req.params.id;
     delete urlDatabase[urlId];
-
-    // After deletion, redirect to the URLs page:
     res.redirect('/urls');
   }
 });
 
 app.post('/register', (req, res) => {
-  console.log("In register"); // Log the POST request body to the console
+  console.log("In register"); 
   let userN = helpers.generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
