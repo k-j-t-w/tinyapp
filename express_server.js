@@ -161,7 +161,6 @@ app.get("/urls/:id", (req, res) => {
     visitDisplay: visitDisplay[req.params.id]
   };
 
-  console.log("show route");
   res.render("urls_show", templateVars);
 
 });
@@ -171,7 +170,6 @@ app.get("/urls", (req, res) => {
   if (!req.session.user_id) {
     return res.redirect('/please_login');
   }
-  console.log("In get URLS");
   const urls = helpers.urlsForUser(req.session.user_id, urlDatabase);
   const templateVars = {
     users: users,
@@ -225,7 +223,6 @@ app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
     res.send("Must be logged in to shorten URLs.");
   } else {
-    console.log(req.body); // Log the POST request body to the console
     let shortID = helpers.generateRandomString();
     const longURL = req.body.longURL;
     urlDatabase[shortID] = {
@@ -237,7 +234,6 @@ app.post("/urls", (req, res) => {
 });
 
 app.delete('/urls/:id', (req, res) => {
-  console.log("delete route");
   if (!helpers.doesUserOwn(req.session.user_id, req.params.id, urlDatabase)) {
     res.send('You do not have access to this command.');
   } else {
@@ -248,7 +244,6 @@ app.delete('/urls/:id', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-  console.log("In register"); 
   let userN = helpers.generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
