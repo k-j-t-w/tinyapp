@@ -1,17 +1,17 @@
 const express = require("express");
-const session = require('express-session');
+// const session = require('express-session');
 const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
-const helpers = require ('./helpers.js')
+const helpers = require('./helpers.js')
 const methodOverride = require('method-override')
 
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2'],
 }));
-app.use(session({secret: "Shh, its a secret!"}));
+// app.use(session({ secret: "Shh, its a secret!" }));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'))
@@ -50,10 +50,12 @@ const uniqueUserDatabase = {
   }
 };
 
-const visitDisplay = {url: {
-  date: "Date",
-  visitor_id: "Visitor",
-}};
+const visitDisplay = {
+  url: {
+    date: "Date",
+    visitor_id: "Visitor",
+  }
+};
 
 // --- GETS ---
 
@@ -91,7 +93,7 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-// if not logged in redirect to login page
+  // if not logged in redirect to login page
   if (!req.session.user_id) {
     res.redirect('/login');
   } else {
@@ -107,88 +109,79 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   //check if loggeed in
   if (!req.session.user_id) {
-    res.redirect('/please_login');
+    return res.redirect('/please_login');
   }
 
   // check if short url is valid
   if (!urlDatabase[req.params.id]) {
-    res.send("ERROR: URL id does not exist");
+    return res.send("ERROR: URL id does not exist");
   }
 
   // check if user owns url
   if (!helpers.doesUserOwn(req.session.user_id, req.params.id, urlDatabase)) {
-    res.send('You do not have access to this page.');
+    return res.send('You do not have access to this page.');
+  }
+
+
+  // page view counter
+  viewsDatabase[req.params.id] = (viewsDatabase[req.params.id] || 0) + 1;
+
+  //uniqueUsers counter
+  if (!uniqueUserDatabase[req.params.id]) {
+    uniqueUserDatabase[req.params.id] = { users: [req.session.user_id] }
   } else {
-
-
-    // page view counter
-    viewsDatabase[req.params.id] = (viewsDatabase[req.params.id] || 0) + 1;
-
-   //uniqueUsers counter
-   if (!uniqueUserDatabase[req.params.id]) {
-    uniqueUserDatabase[req.params.id] = {users: [req.session.user_id]}
-   } else {
     if (uniqueUserDatabase[req.params.id].users.includes(req.session.user_id)) {
       uniqueUserDatabase[req.params.id] = uniqueUserDatabase[req.params.id]
     } else {
       uniqueUserDatabase[req.params.id].users.push(req.session.user_id)
     };
-   };
+  };
 
-   // visits display
+  // visits display
   let timestamp = Date.now()
   if (visitDisplay[req.params.id]) {
-   visitDisplay[req.params.id].push({
-    date: new Date(timestamp),
-    visitor_id: req.session.user_id,
-  });
+    visitDisplay[req.params.id].push({
+      date: new Date(timestamp),
+      visitor_id: req.session.user_id,
+    });
   } else {
     visitDisplay[req.params.id] = [{
       date: new Date(timestamp),
       visitor_id: req.session.user_id,
     }];
   };
-  
-  console.log(visitDisplay);
-
-    const templateVars = {
-      id: req.params.id,
-      longURL: urlDatabase[req.params.id].longURL,
-      users: users,
-      user_id: req.session.user_id,
-      urls: urlDatabase,
-      pageViews: viewsDatabase[req.params.id],
-      uniqueVisitors: uniqueUserDatabase[req.params.id].users.length,
-      visitDisplay: visitDisplay[req.params.id]
-    };
-    res.render("urls_show", templateVars);
-  }
-});
 
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id].longURL,
+    users: users,
+    user_id: req.session.user_id,
+    urls: urlDatabase,
+    pageViews: viewsDatabase[req.params.id],
+    uniqueVisitors: uniqueUserDatabase[req.params.id].users.length,
+    visitDisplay: visitDisplay[req.params.id]
+  };
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+  console.log("show route")
+  res.render("urls_show", templateVars);
+
 });
 
 app.get("/urls", (req, res) => {
   // check if logged in
   if (!req.session.user_id) {
-    res.redirect('/please_login');
-  } else {
-
-    let urls = helpers.urlsForUser(req.session.user_id, urlDatabase);
-    const templateVars = {
-      users: users,
-      user_id: req.session.user_id,
-      urls: urls
-    };
-    console.log(templateVars);
-    res.render("urls_index", templateVars);
+    console.log("hello")
+    return res.redirect('/please_login');
   }
+  console.log("In get URLS")
+  const urls = helpers.urlsForUser(req.session.user_id, urlDatabase);
+  const templateVars = {
+    users: users,
+    user_id: req.session.user_id,
+    urls: urls
+  };
+  res.render("urls_index", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
@@ -259,43 +252,25 @@ app.delete('/urls/:id', (req, res) => {
   }
 });
 
-app.post('/urls/:id/edit', (req, res) => {
-  if (!helpers.doesUserOwn(req.session.user_id, req.params.id, urlDatabase)) {
-    res.send('You do not have access to this command.');
-  } else {
-    const urlId = req.params.id;
-  
-    res.redirect(`/urls/${urlId}`);
-  }
-});
-
-app.post('/loginButton', (req, res) => {
-  res.redirect('/login');
-});
-
-app.post('/registerButton', (req, res) => {
-  res.redirect('/register');
-});
-
 app.post('/register', (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
+  console.log("In register"); // Log the POST request body to the console
   let userN = helpers.generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
 
   //error handling for registration
   if (email === "" || password === "") {
-    res.status(400).send('Email/Password cannot be blank');
+    return res.status(400).send('Email/Password cannot be blank');
   }
-  if (helpers.getUserByEmail(email, users)) {
-    res.status(400).send('Email already in use');
-  } else {
 
-  users[userN] = {id: userN, email: email, password: hashedPassword};
+  if (helpers.getUserByEmail(email, users)) {
+    return res.status(400).send('Email already in use');
+  }
+
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
+  users[userN] = { id: userN, email: email, password: hashedPassword };
   req.session.user_id = userN;
-  res.redirect(`/urls`);
-  };
+  res.redirect("/urls");
 });
 
 app.post('/logout', (req, res) => {
@@ -312,7 +287,7 @@ app.post('/login', (req, res) => {
     if (bcrypt.compareSync(req.body.password, users[user].password)) {
       req.session.user_id = user;
       res.redirect('/urls');
-      
+
     } else {
       res.status(403).send('Wrong Password.');
     }
